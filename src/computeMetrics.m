@@ -36,10 +36,6 @@
     pm(whichExp,2) = pm_ata(resultcell, gtcell) % compute ata
     fprintf('finished exp %d\n',whichExp)
 
-
-
-
-    
     % get per-celltrack-metrics for each experiment
     for whichExp=1:5
         % load resultcell and gtcell

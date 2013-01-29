@@ -1,4 +1,4 @@
-[SFDA,ATA] = main(gtFileString,trackFileString)
+function [SFDA,ATA] = main(gtFileString,trackFileString,sizeConvertCoef,varargin)
 % This function returns the SFDA and ATA, for a given set of groundtruth
 % and tracking results.
 % INPUTS:
@@ -26,7 +26,7 @@
 
     % make gtcell
     if gtFileType==1
-        gtcell = parseViperFile(gtFileString)
+        gtcell = parseViperFile(gtFileString);
     else
         gtcell = parseCsv(gtFileString);
     end
@@ -34,14 +34,23 @@
     % make resultcell
     if resultFileType==1
         load(trackFileString,'datacell');
+        if nargin<3
+            error(['When using TIAM results as an input file, you must include ', ...
+            'the size-conversion coefficient as the third input argument']);
+        end
+        datacell = convertUnitsToPixel(datacell,sizeConvertCoef);
         resultcell = dc2rc(datacell);
     else
         resultcell = parseCsv(trackFileString);
     end
 
     % compute SFDA and ATA
-    SFDA = pm_sfda(resultcell, gtcell, 1, numframes) % compute sfda
-    ATA = pm_ata(resultcell, gtcell) % compute ata
+    startframe = min([findStartFrame(resultcell),findStartFrame(gtcell)]);
+    endframe = max([findEndFrame(resultcell),findEndFrame(gtcell)]);
+    SFDA = pm_sfda(resultcell, gtcell, startframe, endframe); % compute sfda
+    ATA = pm_ata(resultcell, gtcell); % compute ata
+    fprintf('SFDA = %f\n',SFDA);
+    fprintf('ATA = %f\n',ATA);
 
     % Aux functions
     function outcell = parseCsv(csvFileString)
@@ -54,7 +63,9 @@
             outcell{end}(:,1) = [];
             outcell{end} = [repmat([startframe,endframe],size(outcell{end},1),1),outcell{end}];
         end
-        outcell = fixbbox(outcell); 
+        if size(outcell{1},2)<6
+            outcell = fixbbox(outcell);
+        end
     end
 
     function groundcell = parseViperFile(viperFileString)
@@ -62,17 +73,31 @@
             groundcell = gt2gtcell(viperFileString);
         else
             groundcell = gt2gtcell(viperFileString); 
-            groundcell = shiftGtCell(groundcell,-100);
-            groundcell = removeExtraGtFrames(groundcell,[13,38]);
             groundcell = fixbbox(groundcell);
         end
     end
 
-    function celly = shiftGtCell(celly, shiftAmount)
-        for cp = 1 : length(celly)
+    function celly = shiftGtCell(celly,shiftAmount)
+        for cp = 1:length(celly)
             celly{cp}(:,1) = celly{cp}(:,1) + shiftAmount;
             celly{cp}(:,2) = celly{cp}(:,2) + shiftAmount;
         end
+    end
+
+    function startf = findStartFrame(thecell)
+        minframevec = [];
+        for ind = 1:length(thecell)
+            minframevec(end+1) = thecell{ind}(1,1);
+        end
+        startf = min(minframevec);
+    end
+
+    function endf = findEndFrame(acell)
+        maxframevec = [];
+        for indy = 1:length(acell)
+            maxframevec(end+1) = acell{indy}(1,2);
+        end
+        endf = max(maxframevec);
     end
 
     function rc = dc2rc(dc)
