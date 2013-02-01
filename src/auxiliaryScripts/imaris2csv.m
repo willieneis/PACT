@@ -1,8 +1,10 @@
 function imaris2csv(imarisCsvFileString,outputFileName,sizeConversionCoefficient)
+% This function takes an imaris results file (in .csv format) and produces a 
+%   csv file in the defined .csv format for PACT.
 % note: imarisCsvFileString is assumed to be a .csv file (ie. a .xls imaris 
-% file converted into a csv using open office / excel [excel untested]),
-% and sizeConversionCoefficient is the micrometer/pixel conversion value
-% when Imaris was used.
+%   file converted into a csv using open office / excel [excel untested]),
+%   and sizeConversionCoefficient is the micrometer/pixel conversion value
+%   when Imaris was used.
 
     resultcell = parser_imaris(imarisCsvFileString);
     resultcell = convertUnitsToPixel(resultcell,sizeConversionCoefficient);

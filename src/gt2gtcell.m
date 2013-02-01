@@ -36,6 +36,7 @@ function gtcell = gt2gtcell(viper_text_file)
             r = strfind(tok, ':');
             next_startframe = str2num(tok(1:r-1));
             nextline = fgetl(file);
+            nextline = fgetl(file);
 
             k = strfind(nextline, ':');
             if length(k > 0)
